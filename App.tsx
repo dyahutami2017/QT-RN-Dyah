@@ -5,7 +5,7 @@
  * @format
  */
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import type {PropsWithChildren} from 'react';
 import {
   SafeAreaView,
@@ -15,6 +15,7 @@ import {
   Text,
   useColorScheme,
   View,
+  FlatList
 } from 'react-native';
 
 import {
@@ -24,6 +25,7 @@ import {
   LearnMoreLinks,
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
+
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -62,12 +64,33 @@ function App(): React.JSX.Element {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };
 
+  const [datas, setDatas] = useState([]);
+
+  const getPerson = async () => {
+    const person = await fetch ("https://dummyjson.com/users?limit=100");
+    const value = await person.json();
+    const results = value.users.map(data => {
+      return {
+        id : data.id,
+        name : data.firstName + ' ' + data.lastName,
+        age : data.age,
+        height : parseFloat(data.height),
+        image: data.image
+      }
+    })
+    const sortAge = results.sort( function ( a, b ) { return b.age - a.age; } );
+    const filterHeight = sortAge.filter((item) => item.height < 170);
+    setDatas(filterHeight);
+    console.log(filterHeight);
+  }
+
+  
+  useEffect(() => {
+    getPerson();
+  },[])
+
   return (
     <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         style={backgroundStyle}>
@@ -76,21 +99,14 @@ function App(): React.JSX.Element {
           style={{
             backgroundColor: isDarkMode ? Colors.black : Colors.white,
           }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
         </View>
+        <FlatList
+        data={datas}
+        renderItem={
+          ({item}) => 
+            <Text>{item.name}, {item.age}, {item.height}</Text>
+        }
+      />
       </ScrollView>
     </SafeAreaView>
   );
